@@ -1,7 +1,6 @@
-﻿using System;
+﻿using AccessOneMonitor.Data.Types;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AccessOneMonitor.Data.Entities
 {
@@ -11,7 +10,10 @@ namespace AccessOneMonitor.Data.Entities
 
         public Computer Computer { get; set; }
         public long ComputerId { get; set; }
-        public Process Process { get; set; }
-        public long ProcessId { get; set; }
+        public Command Command { get; set; }
+        public long CommandId { get; set; }
+        public string Output { get; set; }
+        public ExecutionStatusType Status { get; set; }
+        public DateTime? DateExecution { get; set; }
     }
 }

@@ -11,7 +11,8 @@ namespace AccessOneMonitor.Data.Entities
 
         public string HostName { get; set; }
         public string Ip { get; set; }
-        public long FreeSpace { get; set; }
-        public IEnumerable<Process> Processes { get; set; }
+        public long? FreeSpace { get; set; }
+
+        public IEnumerable<Execution> Executions { get; set; }
     }
 }

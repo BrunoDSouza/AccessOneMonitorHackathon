@@ -2,18 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AccessOneMonitor.Api.Services;
 using AccessOneMonitor.Data.Configuration;
 using AccessOneMonitor.Data.Repositories;
 using AccessOneMonitor.Data.Repositories.Interfaces;
+using AccessOneMonitor.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AccessOneMonitor
 {
@@ -29,15 +28,25 @@ namespace AccessOneMonitor
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DbContextConfiguration>(options => options.UseSqlServer(Configuration["DefaultConnection:ConnectionString"]));
+            services.AddDbContext<DbContextConfiguration>(options => {
+                options.UseSqlServer(Configuration["DefaultConnection:ConnectionString"]);
+            });
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddCors(options =>
 
+            options.AddPolicy("_myAllowSpecificOrigins",
+            builder =>
+            {
+                builder.WithOrigins("*");
+            }));
 
             #region Repositories Dependecies Injection
 
             services.AddScoped<IComputerRepository, ComputerRepository>();
             services.AddScoped<IProcessRepository, ProcessRepository>();
             services.AddScoped<IExecutionRepository, ExecutionRepository>();
+            services.AddScoped<IMonitorService, MonitorService>();
+            services.AddScoped<ICommandRepository, CommandRepository>();
 
             #endregion
         }
@@ -55,7 +64,24 @@ namespace AccessOneMonitor
             }
 
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseCors("_myAllowSpecificOrigins");
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(name: "api", template: "api/{controller}/{action}/{id?}");
+            });
+
+            UpdateDatabase(app);
+        }
+
+        private static void UpdateDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<DbContextConfiguration>())
+                {
+                    context.Database.Migrate();
+                }
+            }
         }
     }
 }
